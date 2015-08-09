@@ -12,7 +12,7 @@ See the message and peer attribute descriptions in [the telegram-cli Python read
 
 ## Limitations
 
-The script itself supports an unlimited backlog size and number of chats, but it seems that either the Telegram servers or telegram-cli cap at 2 chats per run and 3000 messages per chat. Even worse, exceeding either limit will just cause the callback to never arrive, effectively killing the script in the middle of the backup operation.
+The script itself supports an unlimited backlog size and number of chats, but it seems that either the Telegram servers or telegram-cli cap at 2 chats per run and 3000 messages per chat. Even worse, exceeding either limit will just cause the callback to never arrive, effectively halting the backup operation without notice. So if the script suddenly stops making progress this is probably the cause; restart the script after adjusting the parameters.
 
 ## Dependencies
 
