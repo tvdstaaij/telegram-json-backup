@@ -3,18 +3,22 @@ import json
 import re
 import os
 from functools import partial
+from time import sleep
 
 # List of (partial) dialog names to backup
 # To backup everything: TARGET_DIALOGS = set()
-# More than two may break the callback, unfortunately
 TARGET_DIALOGS = {'MyChat'}
 
 # Amount of messages to fetch in one partial request
+# Changing this may cause problems (see readme)
 HISTORY_CHUNK_SIZE = 100
 
-# Max size of the backlog per dialog
-# More than 3000 seems to break the callback, unfortunately
-HISTORY_LIMIT = 3000
+# Wait time between requesting chunks in seconds
+# Decreasing this may cause problems (see readme)
+REQUEST_DELAY = 1 
+
+# Max size of the backlog per dialog (0 for unlimited)
+HISTORY_LIMIT = 0
 
 # Directory for the backup file(s)
 BACKUP_DIR = './json'
@@ -22,16 +26,11 @@ BACKUP_DIR = './json'
 peer_queue = list()
 outfile = None
 
+# The below three functions are a workaround for
+# https://github.com/vysheng/tg/issues/664
 def props(obj):
     realprops = dict((k, getattr(obj, k)) for k in dir(obj) if not k.startswith('__'))
     return {k: v for k, v in realprops.items() if not callable(v)}
-
-def get_action_name(action):
-    enums = props(tgl)
-    for enum, value in enums.items():
-        if enum.startswith('ACTION_') and action == value:
-            return enum
-    return None
 
 def make_peer_dict(peer):
     if not peer:
@@ -59,6 +58,13 @@ def make_msg_dict(msg):
             msg_dict[date_key] = msg_dict[date_key].isoformat()
     msg_dict['action'] = get_action_name(msg_dict['action'])
     return msg_dict
+
+def get_action_name(action):
+    enums = props(tgl)
+    for enum, value in enums.items():
+        if enum.startswith('ACTION_') and action == value:
+            return enum
+    return None
 
 def backup_next():
     global peer_queue, outfile
@@ -92,7 +98,9 @@ def history_cb(chunk_count, total_count, peer, success, msgs):
         json_obj = json.dumps(msg_dict)
         outfile.write(json_obj)
         outfile.write("\n")
-    if len(msgs) == chunk_count and next_total < HISTORY_LIMIT:
+    sleep(REQUEST_DELAY)
+    if (len(msgs) == chunk_count and
+        (next_total < HISTORY_LIMIT or HISTORY_LIMIT == 0)):
         cb = partial(history_cb, chunk_count, next_total, peer)
         tgl.get_history(peer, total_count, chunk_count, cb)
     else:
