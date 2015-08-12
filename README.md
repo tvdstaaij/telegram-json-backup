@@ -14,6 +14,8 @@ See the message and peer attribute descriptions in [the telegram-cli Python read
 
 The script supports an unlimited backlog size and number of chats, but throttling is necessary to dump large (3000+ messages) backlogs. Unfortunately, the limit is not exactly known and exceeding it will just cause the callback to never arrive, effectively halting the backup operation without notice ([tg#717](https://github.com/vysheng/tg/issues/717)). So if the script suddenly stops making progress this is probably the cause; restart the script after adjusting the parameters.
 
+Media files are not downloaded. Such a feature may be added in a future version.
+
 ## Dependencies
 
 * Python 3
