@@ -111,8 +111,10 @@ def dialog_list_cb(success, dialog_list):
     global peer_queue
     assert success
     print('Selecting dialogs from list')
-    for i in range(0, len(dialog_list) - 1):
+    for i in range(0, len(dialog_list)):
         peer = dialog_list[i]['peer']
+        if peer.type_name == 'user' and not peer.first_name:
+            continue
         selected = len(TARGET_DIALOGS) == 0
         for dialog_keyword in TARGET_DIALOGS:
             if dialog_keyword.replace(' ', '_') in peer.name:
