@@ -51,7 +51,11 @@ def make_msg_dict(msg):
     msg_dict = props(msg)
     for peer_key in {'src', 'dest', 'fwd_src'}:
         if msg_dict[peer_key]:
-            msg_dict[peer_key] = make_peer_dict(msg_dict[peer_key])
+            peer = msg_dict[peer_key]
+            if peer.type_name != 'user' or peer.first_name:
+                msg_dict[peer_key] = make_peer_dict(peer)
+            else:
+                msg_dict[peer_key] = None
     msg_dict.pop('reply', None)
     for date_key in {'date', 'fwd_date'}:
         if msg_dict[date_key]:
@@ -95,6 +99,8 @@ def history_cb(chunk_count, total_count, peer, success, msgs):
         if not msg:
             continue
         msg_dict = make_msg_dict(msg)
+        if not msg_dict:
+            continue
         json_obj = json.dumps(msg_dict)
         outfile.write(json_obj)
         outfile.write("\n")
