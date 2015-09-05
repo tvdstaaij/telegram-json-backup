@@ -1,11 +1,12 @@
 # telegram-json-backup
 
-Python script for telegram-cli that creates JSON dumps of Telegram message backlogs.
+Python script for telegram-cli that creates [JSON Lines](http://jsonlines.org) compliant dumps of Telegram message backlogs.
 
 ## Changelog
 September 5th, 2015:
 
 * Fix bug that produced duplicate JSON objects for the first chunk of messages in a dialog
+* Conform to JSON Lines recommendation of saving files as `.jsonl`
 
 September 4th, 2015:
 

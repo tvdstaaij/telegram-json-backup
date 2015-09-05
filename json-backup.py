@@ -80,7 +80,7 @@ def backup_next():
         return False
     peer = peer_queue.pop(0)
     filename = re.sub(r'[^a-zA-Z0-9\-.,;]', '_', peer.name)
-    path = BACKUP_DIR + '/' + filename + '.json'
+    path = BACKUP_DIR + '/' + filename + '.jsonl'
     print('Backing up %s to %s' % (peer.name, path))
     os.makedirs(BACKUP_DIR, exist_ok=True)
     outfile = open(path, 'w')
