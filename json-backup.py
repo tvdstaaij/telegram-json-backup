@@ -108,7 +108,7 @@ def history_cb(chunk_count, total_count, peer, success, msgs):
     if (len(msgs) == chunk_count and
         (next_total < HISTORY_LIMIT or HISTORY_LIMIT == 0)):
         cb = partial(history_cb, chunk_count, next_total, peer)
-        tgl.get_history(peer, total_count, chunk_count, cb)
+        tgl.get_history(peer, next_total, chunk_count, cb)
     else:
         backup_next()
     return True
