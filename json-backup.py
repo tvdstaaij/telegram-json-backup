@@ -2,6 +2,7 @@ import tgl
 import json
 import re
 import os
+import shutil
 from functools import partial
 from time import sleep
 
@@ -17,8 +18,16 @@ HISTORY_CHUNK_SIZE = 100
 # Decreasing this may cause problems (see readme)
 REQUEST_DELAY = 1 
 
+# Wait time after downloading a media file
+MEDIA_DELAY = 0.1
+
 # Max size of the backlog per dialog (0 for unlimited)
 HISTORY_LIMIT = 0
+
+# Whether to download media files
+# Documents include stickers, video and audio (this is a tg issue)
+DOWNLOAD_PHOTOS = False
+DOWNLOAD_DOCUMENTS = False
 
 # Directory for the backup file(s)
 BACKUP_DIR = './json'
@@ -26,6 +35,7 @@ BACKUP_DIR = './json'
 missing_date_count = 0
 peer_queue = list()
 outfile = None
+mediadir = None
 
 # The below three functions are a workaround for
 # https://github.com/vysheng/tg/issues/664
@@ -72,7 +82,7 @@ def get_action_name(action):
     return None
 
 def backup_next():
-    global peer_queue, outfile, missing_date_count
+    global peer_queue, outfile, missing_date_count, mediadir
     if missing_date_count > 0:
         print('Warning: %d messages were missing a date and are '
               'probably not backed up correctly' % missing_date_count)
@@ -88,6 +98,9 @@ def backup_next():
     path = BACKUP_DIR + '/' + filename + '.jsonl'
     print('Backing up %s to %s' % (peer.name, path))
     os.makedirs(BACKUP_DIR, exist_ok=True)
+    if DOWNLOAD_PHOTOS or DOWNLOAD_DOCUMENTS:
+        mediadir = filename + '_files'
+        os.makedirs(BACKUP_DIR + '/' + mediadir, exist_ok=True)
     outfile = open(path, 'w')
     if HISTORY_LIMIT > 0:
         chunk_size = min([HISTORY_CHUNK_SIZE, HISTORY_LIMIT])
@@ -98,9 +111,10 @@ def backup_next():
     return True
 
 def history_cb(chunk_count, total_count, peer, success, msgs):
-    global outfile, missing_date_count
+    global missing_date_count
     assert success
     next_total = total_count + chunk_count
+    dump_calls = []
     print('Backing up %s [messages %d-%d]'
         % (peer.name, total_count, next_total - 1))
     for i in range(0, len(msgs)):
@@ -112,19 +126,75 @@ def history_cb(chunk_count, total_count, peer, success, msgs):
         msg_dict = make_msg_dict(msg)
         if not msg_dict:
             continue
-        json_obj = json.dumps(msg_dict)
-        outfile.write(json_obj)
-        outfile.write("\n")
-    sleep(REQUEST_DELAY)
+        download_call = None
+        media = msg.media
+        if media:
+            if DOWNLOAD_PHOTOS and media['type'] == 'photo':
+                download_call = msg.load_photo
+            if DOWNLOAD_DOCUMENTS and media['type'] == 'document':
+                download_call = msg.load_document
+            # The following two do not seem to occur, but just in case this is fixed in tg
+            if DOWNLOAD_DOCUMENTS and media['type'] == 'video':
+                download_call = msg.load_video
+            if DOWNLOAD_DOCUMENTS and media['type'] == 'audio':
+                download_call = msg.load_audio
+        # Don't directly process the message, but store the handler invocation
+        # so that they can be chained later
+        dump_calls.insert(0, partial(dump_message, msg_dict, download_call))
+    # Determine the action to take after all messages in this chunk are done
     if (len(msgs) == chunk_count and
         (next_total < HISTORY_LIMIT or HISTORY_LIMIT == 0)):
         if HISTORY_LIMIT > 0 and next_total + chunk_count > HISTORY_LIMIT:
             chunk_count = HISTORY_LIMIT - next_total
         cb = partial(history_cb, chunk_count, next_total, peer)
-        tgl.get_history(peer, next_total, chunk_count, cb)
+        next_history_action = partial(tgl.get_history, peer, next_total, chunk_count, cb)
     else:
-        backup_next()
+        next_history_action = backup_next
+    # Build the call chain: every message handler calls the next,
+    # the last one (= the first in the list) calls the next chunk request
+    for i in range(0, len(dump_calls)):
+        if i == 0:
+            next_call = next_history_action
+            sleep_before_next = REQUEST_DELAY
+        else:
+            next_call = dump_calls[i-1]
+            sleep_before_next = None
+        dump_calls[i] = partial(dump_calls[i], next_call, sleep_before_next, None, None)
+    if dump_calls:
+        # Kickstart the call chain by invoking the last function in the list
+        dump_calls[-1]()
+    else:
+        # Just in case the entire chunk was discarded (unlikely)
+        next_history_action()
     return True
+
+def dump_message(msg_dict, download_call, next_call, sleep_before_next, file_success, file_path):
+    global outfile, mediadir
+    if download_call:
+        # Need to download a file first, defer processing this message
+        # until it has been downloaded by using this function as callback
+        cb = partial(dump_message, msg_dict, None, next_call, MEDIA_DELAY)
+        download_call(cb)
+        return
+    elif file_success and msg_dict['media']:
+        # Just downloaded a file, move it and add the filename to the msg data
+        filename = os.path.basename(file_path)
+        destination = BACKUP_DIR + '/' + mediadir + '/' + filename
+
+        # tg seems to produce some weird file extensions, attempt to fix a few
+        destination = destination.replace('.oga', '.ogg')
+        destination = destination.replace('.mpga', '.mp3')
+
+        shutil.move(file_path, destination)
+        msg_dict['media']['file'] = mediadir + '/' + os.path.basename(destination)
+    elif file_success is not None:
+        print('Failed to save media file')
+    json_str = json.dumps(msg_dict)
+    outfile.write(json_str)
+    outfile.write("\n")
+    if sleep_before_next:
+        sleep(sleep_before_next)
+    next_call()
 
 def dialog_list_cb(success, dialog_list):
     global peer_queue
