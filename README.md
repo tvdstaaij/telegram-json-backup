@@ -29,5 +29,5 @@ Media files are not downloaded. Such a feature may be added in a future version.
 
 ## Dependencies
 
-* Python 3
+* Python 3 (make sure `libpython3` is installed as well as the runtime before building tg)
 * [telegram-cli](https://github.com/vysheng/tg)
