@@ -2,6 +2,16 @@
 
 Python script for telegram-cli that creates JSON dumps of Telegram message backlogs.
 
+## Changelog
+September 5th, 2015:
+
+* Fix bug that produced duplicate JSON objects for the first chunk of messages in a dialog
+
+September 4th, 2015:
+
+* Prevent tgl crash when fetching dialog list containing chats with deleted user accounts
+* Prevent tgl crash when backing up group chat with messages from deleted user accounts
+
 ## Usage
 
 1. Edit the script configuration at the top of [json-backup.py](json-backup.py)
