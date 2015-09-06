@@ -84,8 +84,9 @@ def backup_next():
     print('Backing up %s to %s' % (peer.name, path))
     os.makedirs(BACKUP_DIR, exist_ok=True)
     outfile = open(path, 'w')
-    cb = partial(history_cb, HISTORY_CHUNK_SIZE, 0, peer)
-    tgl.get_history(peer, 0, HISTORY_CHUNK_SIZE, cb)
+    chunk_size = min([HISTORY_CHUNK_SIZE, HISTORY_LIMIT])
+    cb = partial(history_cb, chunk_size, 0, peer)
+    tgl.get_history(peer, 0, chunk_size, cb)
     return True
 
 def history_cb(chunk_count, total_count, peer, success, msgs):
@@ -107,6 +108,8 @@ def history_cb(chunk_count, total_count, peer, success, msgs):
     sleep(REQUEST_DELAY)
     if (len(msgs) == chunk_count and
         (next_total < HISTORY_LIMIT or HISTORY_LIMIT == 0)):
+        if HISTORY_LIMIT > 0 and next_total + chunk_count > HISTORY_LIMIT:
+            chunk_count = HISTORY_LIMIT - next_total
         cb = partial(history_cb, chunk_count, next_total, peer)
         tgl.get_history(peer, next_total, chunk_count, cb)
     else:
