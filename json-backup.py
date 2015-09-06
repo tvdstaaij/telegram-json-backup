@@ -23,6 +23,7 @@ HISTORY_LIMIT = 0
 # Directory for the backup file(s)
 BACKUP_DIR = './json'
 
+missing_date_count = 0
 peer_queue = list()
 outfile = None
 
@@ -71,7 +72,11 @@ def get_action_name(action):
     return None
 
 def backup_next():
-    global peer_queue, outfile
+    global peer_queue, outfile, missing_date_count
+    if missing_date_count > 0:
+        print('Warning: %d messages were missing a date and are '
+              'probably not backed up correctly' % missing_date_count)
+    missing_date_count = 0
     if outfile:
         outfile.close()
         outfile = None
@@ -93,7 +98,7 @@ def backup_next():
     return True
 
 def history_cb(chunk_count, total_count, peer, success, msgs):
-    global outfile
+    global outfile, missing_date_count
     assert success
     next_total = total_count + chunk_count
     print('Backing up %s [messages %d-%d]'
@@ -102,6 +107,8 @@ def history_cb(chunk_count, total_count, peer, success, msgs):
         msg = msgs[i]
         if not msg:
             continue
+        if not msg.date:
+            missing_date_count += 1
         msg_dict = make_msg_dict(msg)
         if not msg_dict:
             continue
