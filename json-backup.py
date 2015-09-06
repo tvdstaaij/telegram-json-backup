@@ -188,7 +188,10 @@ def dump_message(msg_dict, download_call, next_call, sleep_before_next, file_suc
         shutil.move(file_path, destination)
         msg_dict['media']['file'] = mediadir + '/' + os.path.basename(destination)
     elif file_success is not None:
-        print('Failed to save media file')
+        print('Failed to save media file for message '
+              '#%d (success=%s)' % (msg_dict['id'], file_success))
+        if msg_dict['media']:
+            msg_dict['media']['file'] = None
     json_str = json.dumps(msg_dict)
     outfile.write(json_str)
     outfile.write("\n")
