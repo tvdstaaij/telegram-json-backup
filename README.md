@@ -2,18 +2,22 @@
 
 Python script for telegram-cli that creates [JSON Lines](http://jsonlines.org) compliant dumps of Telegram message backlogs.
 
-Support for downloading media files is available on the `experimental` branch. It changes the existing process significantly and has to be tested more thoroughly before merging into `master`.
+Support for downloading media files is available on the experimental branch (`git checkout experimental`). It changes the backup process significantly and may be unstable.
 
-## Changelog
+## Updates
+October 7th, 2015:
+
+* This script can still be used but is no longer maintained. A better alternative is in the works and will be published on Github in the near future.
+
 September 5th, 2015:
 
-* Fix bug that produced duplicate JSON objects for the first chunk of messages in a dialog
-* Conform to JSON Lines recommendation of saving files as `.jsonl`
+* Fix bug that produced duplicate JSON objects for the first chunk of messages in a dialog.
+* Conform to JSON Lines recommendation of saving files as `.jsonl`.
 
 September 4th, 2015:
 
-* Prevent tgl crash when fetching dialog list containing chats with deleted user accounts
-* Prevent tgl crash when backing up group chat with messages from deleted user accounts
+* Prevent tgl crash when fetching dialog list containing chats with deleted user accounts.
+* Prevent tgl crash when backing up group chat with messages from deleted user accounts.
 
 ## Usage
 
