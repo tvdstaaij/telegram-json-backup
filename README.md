@@ -1,13 +1,14 @@
 # telegram-json-backup
 
+***This script has been deprecated in favor of [telegram-history-dump](https://github.com/tvdstaaij/telegram-history-dump). Telegram-json-backup still works but it is no longer maintained.***
+
+## Summary
+
 Python script for telegram-cli that creates [JSON Lines](http://jsonlines.org) compliant dumps of Telegram message backlogs.
 
 Support for downloading media files is available on the experimental branch (`git checkout experimental`). It changes the backup process significantly and may be unstable.
 
 ## Updates
-October 7th, 2015:
-
-* This script can still be used but is no longer maintained. A better alternative is in the works and will be published on Github in the near future.
 
 September 5th, 2015:
 
