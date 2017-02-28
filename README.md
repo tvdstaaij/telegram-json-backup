@@ -1,24 +1,12 @@
 # telegram-json-backup
 
-***This script has been deprecated in favor of [telegram-history-dump](https://github.com/tvdstaaij/telegram-history-dump). Telegram-json-backup still works but it is no longer maintained.***
+***Telegram-json-backup has been deprecated in favor of [telegram-history-dump](https://github.com/tvdstaaij/telegram-history-dump). This script may still work, but note that the required Python support in telegram-cli is broken as of January 2016.***
 
 ## Summary
 
 Python script for telegram-cli that creates [JSON Lines](http://jsonlines.org) compliant dumps of Telegram message backlogs.
 
 Support for downloading media files is available on the experimental branch (`git checkout experimental`). It changes the backup process significantly and may be unstable.
-
-## Updates
-
-September 5th, 2015:
-
-* Fix bug that produced duplicate JSON objects for the first chunk of messages in a dialog.
-* Conform to JSON Lines recommendation of saving files as `.jsonl`.
-
-September 4th, 2015:
-
-* Prevent tgl crash when fetching dialog list containing chats with deleted user accounts.
-* Prevent tgl crash when backing up group chat with messages from deleted user accounts.
 
 ## Usage
 
@@ -37,4 +25,4 @@ The script supports an unlimited backlog size and number of chats, but throttlin
 ## Dependencies
 
 * Python 3 (make sure `libpython3` is installed as well as the runtime before building tg)
-* [telegram-cli](https://github.com/vysheng/tg)
+* [telegram-cli](https://github.com/vysheng/tg) built with Python support
